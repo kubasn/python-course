@@ -11,7 +11,10 @@ POST_TEMPLATE = '''
      '''
 
 class AppTest(TestCase):
-
+    # will run before each test
+    def setUp(self):
+        blog = Blog('Test','Test Author')
+        app.blogs = {'Test':blog}
 
     def test_menu_calls_create_blog(self):
         with patch('builtins.input') as mock_input:
@@ -28,8 +31,7 @@ class AppTest(TestCase):
 
 
     def test_print_blogs(self):
-        blog = Blog('Test','Test Author')
-        app.blogs = {'Test':blog}
+        
         # all you do with patch in this example you replace it with the mock_print
         with patch('builtins.print') as mocked_print:
             app.print_blogs()
@@ -46,9 +48,11 @@ class AppTest(TestCase):
 
 
     def test_menu_prints_prompt(self):
-        with patch('builtins.input') as mocked_input:
+        with patch('builtins.input',return_value = 'q') as mocked_input:
             app.menu()
             mocked_input.assert_called_with(MENU_PROMPT)
+
+
     def test_create_blog(self):
         # every time it's called it will return Test
         # with patch('builtins.input',return_value='Test') as mocked_input:
@@ -58,20 +62,18 @@ class AppTest(TestCase):
 
             self.assertIsNotNone(app.blogs.get('Test'))
     def test_read_blog(self):
-        blog = Blog('Test','Test Author')
-        app.blogs = {'Test':blog}
+   
 
         with patch('builtins.input',return_value='Test') as mocked_input:
             with patch('app.print_posts') as mocked_print_posts:
                app.read_blog()
 
-               mocked_print_posts.assert_called_with(blog)
+               mocked_print_posts.assert_called_with(app.blogs['Test'])
 
 
     def test_print_posts(self):
-        blog = Blog('Test','Test Author')
+        blog = app.blogs['Test']
         blog.create_post('Test Post','Test Content')
-        app.blogs = {'Test':blog}
 
         with patch('app.print_post') as mocked_print_post:
             app.print_posts(blog)
@@ -88,13 +90,10 @@ class AppTest(TestCase):
             marked_print.assert_called_with(expected)
 
     def test_create_post(self):
-        blog = Blog('Test','Test Author')
-        app.blogs = {'Test':blog}
-
         with patch('builtins.input') as mock_input:
             mock_input.side_effect = ('Test', 'Post title', 'Post content')
 
             app.create_post()
 
-            self.assertEqual(blog.posts[0].title, 'Post title')
-            self.assertEqual(blog.posts[0].content, 'Post content')
+            self.assertEqual(app.blog['Test'].posts[0].title, 'Post title')
+            self.assertEqual(app.blog['Test'].posts[0].content, 'Post content')
